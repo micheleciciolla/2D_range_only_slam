@@ -13,7 +13,7 @@ Project for [Probabilistic Robotics](https://sites.google.com/diag.uniroma1.it/p
 
 Data types:
 * VERTEX_XY (landmark known position) = land_id, x, y
-* VERTEX_SE2 (?) = id, x, y, theta
+* VERTEX_SE2 (current pose) = id, x, y, theta
 * EDGE_SE2 (movement) = from_t, to_t, x_t, y_t, theta_t
 * EDGE_RANGE_SE2_XY (measurement) = t, land_id, range
 
