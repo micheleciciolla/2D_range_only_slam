@@ -35,6 +35,7 @@
 %   
 % # load a file.g2o file and returns the four structs of landmark, poses, transitions, observations
 
+
 # Michele Ciciolla's edit (october 2020)
 function [landmarks, poses, transitions, observations] = loadG2o(filepath)
 
@@ -73,38 +74,38 @@ function [landmarks, poses, transitions, observations] = loadG2o(filepath)
     % in base al primo elemento
 		switch(elements{1})
     
+			% (1)
 			case VERTEX_XY
               % VERTEX_XY = landmark id, x, y
         			landmarks(end+1) = extractLandmark(elements);
 				i_vert_xy = i_vert_xy + 1; %do not use pre/post increment. Keep the Matlab compatibility
-        
+				
+ 			% (1)      
 			case VERTEX_SE2
               % VERTEX_SE2 = 
         			poses(end+1) = extractPose(elements);
 				i_vert_se2 = i_vert_se2 + 1;
-
+				
+			% (3)
 			case EDGE_SE2
               % EDGE_SE2 = 
 			        transitions(end+1) = extractTransition(elements);
 				i_edge_se2 = i_edge_se2 + 1;
-        
+				
+      % (4)
       case EDGE_RANGE_SE2_XY
-              % EDGE_RANGE_SE2_XY
-              % to-do
-              % current_obs = extractRange(elements);
+              % EDGE_RANGE_SE2_XY				
+			current_obs = extractRange(elements);
+			if current_obs.pose_id == curr_id
+				% you have already seen this landmark
+				observations(end).observation(end+1) = current_obs.observation;
+			else
+							observations(end+1) = current_obs;
+				curr_id = observations(end).pose_id;
         i_edge_range_se2_xy = i_edge_range_se2_xy + 1;      
-        
-      
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+			end		           
+			
+			
       % --------------- not used -------------------------------
 			case EDGE_BEARING_SE2_XY
 				current_obs = extractBearing(elements);
@@ -129,15 +130,15 @@ function [landmarks, poses, transitions, observations] = loadG2o(filepath)
       % --------------------------------------------------------
 
 			otherwise
-				disp('Error in reading first element : data type');
+				disp('Error in reading first element : data type?');
 		end
     
     
 	end
   
-  printf('[G2oWrapper] loading file...\n#landmarks: %d \n#poses: %d \n',i_vert_xy, i_vert_se2);
-  printf('#transitions: %d \n#observation(bearing-only): %d \n',i_edge_se2, i_edge_bearing_se2_xy);
-  printf('#observation(point): %d \n#laser-scan: %d \n',i_edge_se2_xy, i_robotlaser);  
+  printf('\n[G2oWrapper] loading file...\n# landmarks: %d \n# poses: %d \n',i_vert_xy, i_vert_se2);
+  printf('# transitions: %d \n# observation(range-only): %d \n',i_edge_se2, i_edge_range_se2_xy);
+  % printf('#observation(point): %d \n#laser-scan: %d \n',i_edge_se2_xy, i_robotlaser);  
   fflush(stdout);
 
 end
@@ -167,13 +168,11 @@ function out = extractTransition(elements)
 end
 
 function out = extractRange(elements)
-
-  from_id = str2double(elements{2});
-  land_id = str2double(elements{3});
+  % added
+  id_pose = str2double(elements{2});
+  id_landmark = str2double(elements{3});
   range = str2double(elements{4});
-  out = observation(from_id,land_id, range);
-  
-  
+  out = observation(id_pose,id_landmark, range);
 end
 
 
@@ -184,6 +183,7 @@ function out = extractBearing(elements)
   from_id = str2double(elements{2});
   land_id = str2double(elements{3});
   bearing = str2double(elements{4});
+	# out = [pose_id, obs]
   out = observation(from_id,land_id, bearing);
 end
 

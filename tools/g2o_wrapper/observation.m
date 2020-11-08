@@ -34,6 +34,7 @@
 % #
 
 function out = observation(from_id, land_id, obs)
+  % obs = range
   out.pose_id = from_id;
   out.observation = landmark(land_id, obs);
 end

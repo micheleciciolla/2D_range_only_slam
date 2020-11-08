@@ -2,7 +2,7 @@
 % #   deveoped for the lectures of probabilistic robotics at 
 % #   Sapienza, University of Rome.
 % #  
-% #     Copyright (c) 2016 Bartolomeo Della Corte, Giorgio Grisetti
+% #     Copyright (c) 2016 Bartolomeo Della Corte, Giorgio Grisetti (che grande)
 % #  
 % #   It is licences under the Common Creative License,
 % #   Attribution-NonCommercial-ShareAlike 3.0
@@ -33,16 +33,20 @@
 % #   PURPOSE.
 % #
 
+
+% Ok
 function out = landmark(varargin)
-  %There is always an id
-  out.id = varargin{1}; %id
+  
+  % There is always an id
+  out.landmark_id = varargin{1}; %id
   Nvarargin = length(varargin);
-  %if we call the fx with 3 argument, we are populating
-  %the landmark absolute position structures.
+  
+  % if we call the fx with 3 argument, we are populating
+  % the landmark absolute position structures.
   if(Nvarargin == 2)
     var2 = varargin{2};
     if(length(var2) == 1)
-      out.bearing = var2; %bearing only
+      out.range_measure = var2; % range only
     end
     if(length(var2) == 2)
     out.x_pose = var2(1); %x-pose
