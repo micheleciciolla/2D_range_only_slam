@@ -9,9 +9,9 @@ Project for [Probabilistic Robotics](https://sites.google.com/diag.uniroma1.it/p
 
 # Dataset description and how data is extracted
 
-* ground_truth.g2o is used to understand how well you're doing wrt where you should be and where landmarks should be.
+ground_truth.g2o is used to understand how well you're doing wrt where you should be and where landmarks should be.
 
-* initial_guess.g2o is the dataset you use.
+initial_guess.g2o is the dataset you use.
 Data types:
 * VERTEX_XY (landmark known position) = land_id, x, y
 * VERTEX_SE2 (current pose) = id, x, y, theta
@@ -25,6 +25,7 @@ Data types:
 
 
 <a href=""><img src="https://lh3.googleusercontent.com/proxy/cHWHQt6vNxn2umETcH47LmEiRxl1OH0InjtoYeuRIiwr-_Ndbg3tpLwbnEuqceU82wIDczFyiRdX7LL-4Ywc" width="500"></a>
+
 
 
 
