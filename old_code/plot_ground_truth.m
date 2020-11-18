@@ -19,7 +19,6 @@ addpath 'datasets'
 figure(1); title("ekf-localization-range-only");
 
 
-
 % plot all poses
 for p=1:length(poses)
 	x = poses(p).x;

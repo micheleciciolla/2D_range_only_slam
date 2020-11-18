@@ -48,17 +48,18 @@ for i=1:4
 	xr = positions_x(i);
 	yr = positions_y(i);
 	
-	measurement = measurements(i);
-	
-	current_r_square = xl^2 + xr^2 - 2*xl*xr + yl^2 + yr^2 - 2*yl*yr;
-	regression = [2*epsi(1) - 2*xr, 2*epsi(2) - 2*yr];
+	z(i) = measurements(i);
+	r_square = (i) = xl^2 + xr^2 - 2*xl*xr + yl^2 + yr^2 - 2*yl*yr;
+	regression(i) = [2*epsi(1) - 2*xr, 2*epsi(2) - 2*yr];
 		
-	error = measurement - sqrt(current_r_square);
-	epsi = pinv(regression)*abs(error);
-	plot(epsi(1),epsi(2),'*',"markersize",10,"color",'k');
-	pause(0.5);
+	error(i) = z(i)^2 - (current_r_square(i));
+
 
 	
 endfor
 fprintf('result %f \n',epsi - real_pos);
 
+return 
+epsi = pinv(regression)*abs(error);
+plot(epsi(1),epsi(2),'*',"markersize",10,"color",'k');
+pause(0.5);

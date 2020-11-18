@@ -98,8 +98,10 @@ function land_position = converge_landmark_pos(info)
 	% initial guess
 	% plot(epsi(1),epsi(2),'square',"markersize",7,"color",'b',"markerfacecolor",'b');
 
-
-	for i=1:samples_size
+	b = zeros(2,1);
+	H = zeros(2,2);
+	
+	for i=1:samples_size % all the time you've seen the landmark
 		
 		xl = epsi(1);
 		yl = epsi(2);
@@ -113,9 +115,11 @@ function land_position = converge_landmark_pos(info)
 		% vedi se cambiare metodo o cambiare matrice
 		regression = [2*epsi(1) - 2*xr, 2*epsi(2) - 2*yr];
 			
-		error =  measurement^2 - (current_r_square);
-
-		delta_epsi = pinv(regression)*((error));
+		error = -(current_r_square) + measurement^2;
+		
+		b = pinv(regression)*((error));
+		H = regression'*regression;
+		delta_epsi = -pinv(H)*b;
 		epsi = epsi + delta_epsi;
 		
 		% plot(epsi(1),epsi(2),'square',"markersize",7,"color",'k',"markerfacecolor",'k');
@@ -141,9 +145,13 @@ for l=1:length(landmarks_gt)
 	printf('completed %i perc \n',[l/length(landmarks_gt)*100]);
 	fflush(stdout);
 	
+	% now i'm optimizing this landmark id
 	searched_landmark = landmarks_gt(l).landmark_id;
 	
+	% retrieve landmark info from the dataset 
+	% you get landmark_position, range, id, how many times you got it
 	landmark_info = find_landmark_references(searched_landmark,poses,observations);
+	% start optimization process for this landmark based on the info you have
 	landmark_pos = converge_landmark_pos(landmark_info);
 	
 	% update initial_condition
@@ -152,6 +160,7 @@ for l=1:length(landmarks_gt)
 
 endfor
 
+%% PRINTING PHASE
 % plot all the landmarks in my_initial_condition
 figure(1)
 xlim([-15,15]);
@@ -160,6 +169,7 @@ title("initial prevision");
 grid on
 hold on
 
+%% print my results as initial conditions
 for l = 1:length(my_initial_condition)
 
 	plot(my_initial_condition(l).landmark_position(1), my_initial_condition(l).landmark_position(2),"square","markersize",8,"color",'k',"markerfacecolor",'k');
@@ -177,6 +187,8 @@ endfor
 %hold on
 %grid on
 
+%% print the ground truth for landmarks
+
 for l = 1:length(landmarks_gt)
 
 	plot(landmarks_gt(l).x_pose, landmarks_gt(l).y_pose,"square","markersize",8,"color",'r',"markerfacecolor",'r');
@@ -185,7 +197,10 @@ for l = 1:length(landmarks_gt)
 endfor
 
 
-% evaluating if convergence is good
+
+%% ------------------------------------ %%
+%% evaluating if convergence is good -- %%
+%% ------------------------------------ %%
 
 simili = [];
 
@@ -211,7 +226,7 @@ for i=1:length(my_initial_condition)
 		diffy = abs(guessy-groundy);
 		
 		if(diffx < 0.5 && diffy < 0.5)
-			% they're similar
+			% they're similar !
 			
 			simili(end+1) = id;
 		

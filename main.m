@@ -1,133 +1,223 @@
 close all
 clear
 clc
+pause(0.01);
 
 addpath '../'
 addpath 'tools/g2o_wrapper'
 addpath 'tools/visualization'
 source "tools/utilities/geometry_helpers_2d.m"
 addpath 'datasets'
+addpath './getIDs_and_index.m'
+addpath './get_formatted_index.m'
+addpath './initial_guess_eval.m'
 
+
+%% ------------------------------------ %%
+%% ----------- START ------------------ %%
+%% ------------------------------------ %%
 
 % The dataset is composed by a g2o file which contain poses and range observations. 
 % The file contain also odometry edges that are used to construct the initial guess
 % for the problem.
 
+% loading both datasets
 [landmarks, poses, transitions, observations] = loadG2o('slam2d_range_only_initial_guess.g2o');
+[landmarks_ground_truth, poses_ground_truth, transitions_ground_truth, observations_ground_truth] = loadG2o('slam2d_range_only_ground_truth.g2o');
 
-landmark_lookout = [];
-id = [];
-count = [];
 
-	function yes = inside(list,elem)
+%% ------------------------------------ %%
+%% ----------- INITIAL GUESS ---------- %%
+%% ------------------------------------ %%
 
-	yes = false;
-	for e =1:length(list)
+%% here i'm getting a LIST of HOW MANY landarmsks and their ID
+available_landmarks = zeros(length(landmarks_ground_truth),1);
+for l=1:length(landmarks_ground_truth)
+	available_landmarks(l) = landmarks_ground_truth(l).landmark_id;
+endfor
 
-	if list(e) == elem
-		yes = true;
-	endif
-	endfor
+%% get an INITIAL GUESS of the landmarks given their id, poses and obs from init_guess_dataset
+% FIELDS: 
+% 	landmarks(i).id
+% 	landmarks(i).landmark_position(1) and landmarks(i).landmark_position(2)
+landmarks = get_initial_guess(available_landmarks, poses, observations);
+% evaluate initial guess wrt landmarks_ground_truth
+eval = initial_guess_eval(landmarks_ground_truth,landmarks);
+fflush(stdout);
+
+%% ------------------------------------ %%
+%% ----------- ICP INIT --------------- %%
+%% ------------------------------------ %%
+
+global num_poses = length(poses);
+global num_landmarks = length(landmarks);
+
+% build XR_guess and XR_true
+XR_guess = zeros(3,3,num_poses);
+XR_true = zeros(3,3,num_poses);
+
+for p=1:num_poses
+	% robot coordinates for that pose p
+	[x,y,theta] = deal(poses(p).x, poses(p).y, poses(p).theta);
+
+	% rotz 
+	XR_guess(1,1,p) = cos(theta);
+	XR_guess(1,2,p) = -sin(theta);
+	XR_guess(2,1,p) = sin(theta);
+	XR_guess(2,2,p) = cos(theta);
 	
+	% t
+	XR_guess(1,3,p) = x;
+	XR_guess(2,3,p) = y;
+	
+	% 1
+	XR_guess(3,3,p) = 1;
+	
+	%%%%%%%%%%% XR_true
+	
+	% robot coordinates for that pose p
+	[x,y,theta] = deal(poses_ground_truth(p).x, poses_ground_truth(p).y, poses_ground_truth(p).theta);
 
-for s=1:length(observations)
+	% rotz 
+	XR_true(1,1,p) = cos(theta);
+	XR_true(1,2,p) = -sin(theta);
+	XR_true(2,1,p) = sin(theta);
+	XR_true(2,2,p) = cos(theta);
 	
-	sample = observations(s);
-	current_pose = sample.pose_id;
+	% t
+	XR_true(1,3,p) = x;
+	XR_true(2,3,p) = y;
+	
+	% 1
+	XR_true(3,3,p) = 1;
 
-	
-	for o=1:length(sample.observation)
-	
-		landmark_and_range = sample.observation(o);
-		landmark_seen = landmark_and_range.landmark_id;
+endfor
+
+% build XL_guess
+XL_guess = zeros(2,num_landmarks);
+XL_true = zeros(2,num_landmarks);
+
+for l=1:num_landmarks
+	XL_guess(1:2,l) = landmarks(l).landmark_position;
+	XL_true(1:2,l) = [landmarks_ground_truth(l).x_pose; landmarks_ground_truth(l).y_pose];
+endfor
+
+% build Z
+num_measurements = 0;
+for o=1:length(observations)
+	% num_measurements is the total amount of measuremtns you got
+	num_measurements += length(observations(o).observation);
+endfor
+
+% building associations and Z
+% associations is a 2x num_measurements vector in which we have [ID_pose, ID_landmark]
+% so for each pose you have all the landmark id you see from there
+
+% Z is just all the range you measure
+associations = zeros(2,num_measurements);
+Z = zeros(1,num_measurements);
+
+% init idices
+poseID = 1;
+measure_num = 1;
+% get a ordered list of landmark_id and their order position
+allIDs = getIDs_and_index(observations);
+
+for o=1:length(observations)
 		
-		% now you^re seeying this landmark
-		% check if is inside the list
+		for i=1:length(observations(o).observation)
 		
-		if inside(id,landmark_seen)
-			count(landmark_seen) = count(landmark_seen) +1.0;
+			associations(1,measure_num) = poseID;
+			% real id must be converted in [1,..61] to match ICP indices
+			% 90 is not acceptable for example (see getIDs_and_index.m)
+			real_id = observations(o).observation(i).landmark_id;
+			associations(2,measure_num) = get_formatted_index(allIDs,real_id);
+
+			Z(1,measure_num) = observations(o).observation(i).range_measure;
 			
-		else
-			id(end+1) = landmark_seen;
-			count(landmark_seen) = 1.0;
-		endif
-		
-		
-	endfor
-
-
-endfor
-
-disp("done");
-
-
-found = 0;
-for i=1:length(id)
+			measure_num+=1;
+		endfor
+		poseID+=1;
 	
-	% for each id tell me how many you found
-	if id(i) > 0
-		found = count(id(i));
-		printf('\nlandmark %f is found %f times\n', id(i), found);
-	endif
+	
 endfor
 
 
-return
+%% ------------------------------------ %%
+%% ----------- ICP CALL --------------- %%
+%% ------------------------------------ %%
+
+source "./multi_ICP_3d.m"
 
 
+[XR, XL, chi_stats, num_inliers]=doMultiICP(...
+							XR_guess, XL_guess, Z,
+							
+							associations, 
+							num_poses, 
+							num_landmarks,
+							
+							num_iterations=15, 
+							damping=0.01, 
+							kernel_threshold=0.0);
+							
 
+fprintf("\n* ICP completed *\n");
+fflush(stdout);
 
+%% ------------------------------------ %%
+%% ---------- TRAJECTORY -------------- %%
+%% ------------------------------------ %%
+%% -- PLOT GROUND TRUTH - CORRECTION -- %%
+%% ------------------------------------ %%
 
+figure()
+subplot(1,2,1);
+title ("TRAJECTORIES - GROUND TRUTH AND CORRECTION");
+hold on;
+grid minor;
 
-
-
-
-function lookout = check_add(lookout,pose,landmark)
-
-% ogni elemento di lookout è un [landmark_id, count, [pose1,pose2,pose3...] ]
-
-% vedi se c'è landmark
-
-	for e=1:length(lookout)
-			if lookout(e).landmark_id == landmark
-				% update
-				lookout(e).count = lookout(e).count +1;
-				lookout(e).poses(end+1) = pose;
-			endif
-			
-			% add it
-			lookout(end+1).landmark_id = landmark;
-			lookout(end).count = 1;
-			lookout(end).poses = [pose];
-	endfor
-
-end %end function
-
-
-
-
-
-
-
-
-
-
-
-return 
-for j=1:3
-
-	sample = observations(j);
-	posa = sample.pose_id;
+for p=1:length(poses_ground_truth)-1
 	
-	fprintf('\ncurrent pose n. %f :\n',posa)
-
-	for i=1:length(sample.observation)
+	x1 = poses_ground_truth(p).x;
+	y1 = poses_ground_truth(p).y;
 	
-		landmark_and_range = sample.observation(i)
-		fprintf('\n	landmark %f is %f far\n',landmark_and_range.landmark_id, landmark_and_range.range_measure)
+	x2 = poses_ground_truth(p+1).x;
+	y2 = poses_ground_truth(p+1).y;
+	
+	plot([x1 x2],[y1 y2],'linestyle',"-",'marker','o','color','r','linewidth',3);
+	pause(0.001);
 
-	endfor
-		
 endfor
 
+for p=1:length(poses_ground_truth)-1
 
+	[x1g, x2g, y1g, y2g] = deal(XR(1,3,p),XR(1,3,p+1), XR(2,3,p),XR(2,3,p+1));
+
+	plot([x1g x2g],[y1g y2g],'linestyle',"-",'marker','o','color','b','linewidth',3);
+	pause(.001);
+
+endfor
+ 
+ 
+%% ------------------------------------ %%
+%% ---------------- MAP --------------- %%
+%% ------------------------------------ %%
+%% -- PLOT GROUND TRUTH - CORRECTION -- %%
+%% ------------------------------------ %%
+
+subplot(1,2,2);
+title ("MAP - GROUND TRUTH AND CORRECTION");
+hold on;
+grid minor;
+
+for l=1:length(landmarks_ground_truth)
+	
+	plot(landmarks_ground_truth(l).x_pose, landmarks_ground_truth(l).y_pose,"o","markersize",6,"color",'k',"markerfacecolor",'r');
+
+endfor
+
+for l=1:length(landmarks_ground_truth)
+	pause(0.001);
+	plot(XL(1,l),XL(2,l), "o","markersize",7,"color",'k',"markerfacecolor",'b');
+endfor
