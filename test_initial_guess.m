@@ -1,5 +1,51 @@
+close all
+clear
+clc
+pause(0.01);
+
+addpath '../'
+addpath 'tools/g2o_wrapper'
+addpath 'tools/visualization'
+source "tools/utilities/geometry_helpers_2d.m"
+addpath 'datasets'
+addpath './getIDs_and_index.m'
+addpath './get_formatted_index.m'
+
+
+
 %% ------------------------------------ %%
-%% ------ MAIN FUNCTION --------------- %%
+%% ----------- START ------------------ %%
+%% ------------------------------------ %%
+
+% loading both datasets
+[landmarks, poses, transitions, observations] = loadG2o('slam2d_range_only_initial_guess.g2o');
+[landmarks_ground_truth, poses_ground_truth, transitions_ground_truth, observations_ground_truth] = loadG2o('slam2d_range_only_ground_truth.g2o');
+
+% testing algo on ground truth
+observations = observations_ground_truth;
+poses = poses_ground_truth;
+
+%% ------------------------------------ %%
+%% ----------- INITIAL GUESS ---------- %%
+%% ------------------------------------ %%
+
+%% here i'm getting a LIST of HOW MANY landarmsks and their ID
+available_landmarks = zeros(length(landmarks_ground_truth),1);
+for l=1:length(landmarks_ground_truth)
+	available_landmarks(l) = landmarks_ground_truth(l).landmark_id;
+endfor
+
+%% get an INITIAL GUESS of the landmarks given their id, poses and obs from init_guess_dataset
+% FIELDS: 
+% 	landmarks(i).id
+% 	landmarks(i).landmark_position(1) and landmarks(i).landmark_position(2)
+landmarks = get_initial_guess(available_landmarks, poses, observations);
+% evaluate initial guess wrt landmarks_ground_truth
+eval = initial_guess_eval(landmarks_ground_truth,landmarks);
+fflush(stdout);
+
+%% ------------------------------------ %%
+%% ----------- FUNCTION --------------- %%
 %% ------------------------------------ %%
 
 % inputs
@@ -11,11 +57,11 @@ function my_initial_condition = get_initial_guess(available_landmarks, poses, ob
 
 	my_initial_condition = [];
 
-	printf('\nDataset processed : %d%%',0);
+	printf('Dataset processed %d%% \n',0);
 	for l=1:length(available_landmarks)
 
 		if mod( round(l/length(available_landmarks)*100), 33)==0.0
-			printf('\nDataset processed : %d%%',[round(l/length(available_landmarks)*100)]);
+			printf('Dataset processed %d%% \n',[round(l/length(available_landmarks)*100)]);
 			fflush(stdout);
 		endif
 		
@@ -26,6 +72,7 @@ function my_initial_condition = get_initial_guess(available_landmarks, poses, ob
 		% you get landmark_position, range, id, how many times you got it
 		landmark_info = find_landmark_references(searched_landmark,poses,observations);
 		% start optimization process for this landmark based on the info you have
+		% landmark_pos = converge_landmark_pos(landmark_info);
 		landmark_pos = triangulate_landmark_pos(landmark_info);
 		
 		% update initial_condition
@@ -33,7 +80,7 @@ function my_initial_condition = get_initial_guess(available_landmarks, poses, ob
 		my_initial_condition(end).landmark_position = landmark_pos;
 
 	endfor
-	printf('\nDataset processed : %d%% \n',100);
+	printf('Dataset processed %d%% \n',100);
 	fflush(stdout);
 	pause(0.1);
 
@@ -104,17 +151,12 @@ function id_pose_range = find_landmark_references(searched_landmark,poses,observ
 end
 
 function land_position = converge_landmark_pos(info)
-
+	
 	starting_xr = info(1).pose.x;
 	starting_yr = info(1).pose.y;
 	starting_range = info(1).range;
 	samples_size = info(1).counts;
-	
-	%{
-	if samples_size < 3.0
-			printf("\n The landmark %i has < 3 samples\n", info.id); fflush(stdout);
-	endif
-	%}
+
 	randn = rand(1);
 	randn2 = rand(1);
 	

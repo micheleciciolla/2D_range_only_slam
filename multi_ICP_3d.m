@@ -158,6 +158,10 @@ function [XR, XL, chi_stats, num_inliers]=doMultiICP(XR, XL, Z,
   system_size=pose_dim*num_poses+landmark_dim*num_landmarks;  % 3*301 + 2*61
   for (iteration=1:num_iterations)
 	
+		printf('\nIteration processed : %i%%',iteration*10);
+		fflush(stdout);
+
+	
 		% we iterate num_iterations times
 	
     H=zeros(system_size, system_size);

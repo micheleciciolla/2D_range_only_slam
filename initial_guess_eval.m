@@ -1,19 +1,20 @@
-% initial guess evaluation
+% guess evaluation
 
-% landmarks_ground_truth are the real landmark positions
-% landmarks are the guessed landmark positions
+% XL_true is the real landmark positions
+% XL is the guessed landmark positions
 
 % they're organized with the same order ID
 
-
-function count = initial_guess_eval(landmarks_ground_truth,landmarks)
-	threshold = 0.5;
+function count = initial_guess_eval(XL_true,XL_guess)
+	threshold = 1.5;
 	count=0;
 
-	for l=1:length(landmarks_ground_truth)
+	for l=1:length(XL_true)
 		
-		if ( abs(landmarks_ground_truth(l).x_pose - landmarks(l).landmark_position(1)) < threshold ...
-				&& abs(landmarks_ground_truth(l).y_pose - landmarks(l).landmark_position(2)) < threshold)
+		%if ( abs(XL_true(1,l) - XL_guess(1,l)) < threshold ...
+		%		&& abs(XL_true(2,l) - XL_guess(2,l)) < threshold)
+				
+		if ( norm(XL_true(:,l) - XL_guess(:,l)) < threshold )
 				
 				% they're similar
 				
@@ -21,6 +22,6 @@ function count = initial_guess_eval(landmarks_ground_truth,landmarks)
 				
 		endif
 	endfor
-	printf("\nYour initial guess has %i true positions\n",count);
+	printf("\nYour guess has %i correct positions\n",count);
 	
 endfunction
