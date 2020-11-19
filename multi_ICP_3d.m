@@ -76,6 +76,20 @@ function [e,Jr,Jl]=errorAndJacobian_2(Xr,Xl,z)
 	e=(z_hat-z);
 endfunction;
 
+# another error and jacobian function
+
+# error and jacobian of a measured landmark
+# input:
+#   Xr: the robot pose (4x4 homogeneous matrix)
+#   Xl: the landmark pose (3x1 vector, 3d pose in world frame)
+#   z:  measured position of landmark
+# output:
+#   e: 3x1 is the difference between prediction and measurement
+#   Jr: 3x6 derivative w.r.t the error and a perturbation on the
+#       pose
+#   Jl: 3x3 derivative w.r.t the error and a perturbation on the
+#       landmark
+
 function [e,Jr,Jl]=errorAndJacobian(Xr,Xl,z)
    R=Xr(1:2,1:2);
    t=Xr(1:2,3);
@@ -158,7 +172,7 @@ function [XR, XL, chi_stats, num_inliers]=doMultiICP(XR, XL, Z,
   system_size=pose_dim*num_poses+landmark_dim*num_landmarks;  % 3*301 + 2*61
   for (iteration=1:num_iterations)
 	
-		printf('\nIteration processed : %i%%',iteration*10);
+		printf('\nIterations processed : %i%%',iteration*10);
 		fflush(stdout);
 
 	
@@ -195,7 +209,7 @@ function [XR, XL, chi_stats, num_inliers]=doMultiICP(XR, XL, Z,
       chi_stats(iteration)+=chi;
 
       Hrr=Jr'*Jr;
-      Hrl=Jr'*Jl; % 
+      Hrl=Jr'*Jl; 
       Hll=Jl'*Jl;
 			
       br=Jr'*e;

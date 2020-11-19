@@ -5,13 +5,15 @@ warning off;
 pause(1);
 
 addpath '../'
+addpath 'tools'
 addpath 'tools/g2o_wrapper'
 addpath 'tools/visualization'
 source "tools/utilities/geometry_helpers_2d.m"
 addpath 'datasets'
-addpath './getIDs_and_index.m'
-addpath './get_formatted_index.m'
-addpath './initial_guess_eval.m'
+addpath './tools/getIDs_and_index.m'
+addpath './tools/get_formatted_index.m'
+addpath './tools/initial_guess_eval.m'
+addpath './tools/get_initial_guess.m'
 
 %% ------------------------------------ %%
 %% ----------- START ------------------ %%
@@ -23,7 +25,7 @@ fflush(stdout);
 % The file contain also odometry edges that are used to construct the initial guess
 % for the problem.
 
-% loading both datasets
+% LOADING BOTH DATASETS
 [landmarks, poses, transitions, observations] = loadG2o('slam2d_range_only_initial_guess.g2o');
 [landmarks_ground_truth, poses_ground_truth, transitions_ground_truth, observations_ground_truth] = loadG2o('slam2d_range_only_ground_truth.g2o');
 
@@ -34,7 +36,7 @@ fflush(stdout);
 printf("\n\n%% ------------------------------------ %%\n%% ----- Generating an initial guess -- %%\n%% ------------------------------------ %%\n\n");
 fflush(stdout);
 
-%% here i'm getting a LIST of HOW MANY landarmsks and their ID
+% here i'm getting a LIST of HOW MANY landarmsks and their ID
 available_landmarks = zeros(length(landmarks_ground_truth),1);
 for l=1:length(landmarks_ground_truth)
 	available_landmarks(l) = landmarks_ground_truth(l).landmark_id;
@@ -53,7 +55,8 @@ landmarks = get_initial_guess(available_landmarks, poses, observations);
 global num_poses = length(poses);
 global num_landmarks = length(landmarks);
 
-% build XR_guess and XR_true
+% (1)
+% BUILD XR_guess and XR_true
 XR_guess = zeros(3,3,num_poses);
 XR_true = zeros(3,3,num_poses);
 
@@ -96,7 +99,8 @@ for p=1:num_poses
 
 endfor
 
-% build XL_guess
+% (2)
+% BUILD XL_guess and XL_true
 XL_guess = zeros(2,num_landmarks);
 XL_true = zeros(2,num_landmarks);
 
@@ -109,8 +113,8 @@ endfor
 eval_guess = initial_guess_eval(XL_true,XL_guess);
 fflush(stdout);
 
-
-% build Z
+% (3)
+% BUILD Z AND ASSOCIATIONS
 num_measurements = 0;
 for o=1:length(observations)
 	% num_measurements is the total amount of measuremtns you got
@@ -157,7 +161,6 @@ printf("\n\n%% ------------------------------------ %%\n%% ------ Starting ICP o
 fflush(stdout);
 
 source "./multi_ICP_3d.m"
-
 
 [XR_correction, XL_correction, chi_stats, num_inliers]=doMultiICP(...
 							XR_guess, XL_guess, Z,
@@ -243,7 +246,6 @@ title("RESULTING TRAJECTORY");
 plot(XR_true(1,3,:),XR_true(2,3,:), 'g-', 'linewidth', 3);
 plot(XR_correction(1,3,:),XR_correction(2,3,:), 'b-', 'linewidth', 3);
 legend("ground truth","correction");
-
 
 printf("\n\n%% ------------------------------------ %%\n%% ---------- PLOT GENERATED ---------- %%\n%% ------------------------------------ %%\n\n");
 fflush(stdout);
