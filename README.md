@@ -13,7 +13,7 @@ Our goal is to implement and simulate the robot model described in the following
 ## Project status
 Completed <a href="https://github.com/micheleciciolla/vehicles-platooning"><img src="https://www.flaticon.com/svg/static/icons/svg/214/214353.svg" width="30"></a>
 
-<a href="https://www.dis.uniroma1.it/"><img src="./results/comparative_results.png" width="350"></a>
+<a href="./results/comparative_results.png"><img src="./results/comparative_results.png" width="500"></a>
 
 ## Running the test
 
@@ -26,9 +26,7 @@ octave main.m
 <a href="https://www.linkedin.com/in/micheleciciolla/"><img src="https://www.tecnomagazine.it/tech/wp-content/uploads/2013/05/linkedin-aggiungere-immagini.png" width="30"></a>
 
 ## Documentation
-No report
-
-<a href=""><img src="https://lh3.googleusercontent.com/proxy/cHWHQt6vNxn2umETcH47LmEiRxl1OH0InjtoYeuRIiwr-_Ndbg3tpLwbnEuqceU82wIDczFyiRdX7LL-4Ywc" width="500"></a>
+No report, sorry.
 
 
 
