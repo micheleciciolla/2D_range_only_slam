@@ -26,7 +26,7 @@ octave main.m
 
 ## Video Demo
 Click on the image for complete video
-[![SC2 Video](./results/demo.mp4)](https://youtu.be/7jiCi2evqbI) 
+[![SC2 Video](./results/demo.gif)](https://youtu.be/7jiCi2evqbI) 
 
 ## Team
 * Michele Ciciolla <a href="https://github.com/micheleciciolla"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Octicons-mark-github.svg/1024px-Octicons-mark-github.svg.png" width="30"></a>
