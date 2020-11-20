@@ -29,7 +29,6 @@ fflush(stdout);
 [landmarks, poses, transitions, observations] = loadG2o('slam2d_range_only_initial_guess.g2o');
 [landmarks_ground_truth, poses_ground_truth, transitions_ground_truth, observations_ground_truth] = loadG2o('slam2d_range_only_ground_truth.g2o');
 
-
 %% ------------------------------------ %%
 %% ----------- INITIAL GUESS ---------- %%
 %% ------------------------------------ %%
@@ -195,6 +194,8 @@ title("FINAL RESULTS");
 subplot(1,2,1);
 grid minor;
 hold on;
+xlim([-15,15]);
+ylim([-15,10]);
 plot(XR_true(1,3,:),XR_true(2,3,:), 'g-.', 'linewidth', 3);
 plot(XR_correction(1,3,:),XR_correction(2,3,:), 'b-', 'linewidth', 3);
 plot(XR_guess(1,3,:),XR_guess(2,3,:), 'k-.', 'linewidth', 3);
@@ -223,6 +224,8 @@ pause(0.5)
 subplot(1,2,2);
 
 hold on;
+xlim([-15,15]);
+ylim([-15,10]);
 grid minor;
 plot(XL_correction(1,:),XL_correction(2,:), "o","markersize",7,"color",'k',"markerfacecolor",'b','linestyle','none');
 plot(XL_true(1,:),XL_true(2,:), "o","markersize",7,"color",'k',"markerfacecolor",'g','linestyle','none');
