@@ -1,4 +1,4 @@
-# Perfoming 2D Slam with a Differential Drive Robot having Range Sensor
+# Perfoming 2D Slam with a Differential Drive Mobile Robot having a Range Sensor onboard
 
 ![Puppet Forge endorsement](https://img.shields.io/puppetforge/e/camptocamp/openssl?color=light%20green&label=Ubuntu%2016.04%20LTS&logo=Ubuntu)
 
